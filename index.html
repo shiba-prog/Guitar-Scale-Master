@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guitar Scale Master Extensions</title>
+    <title>Guitar Scale Master Complete</title>
     <style>
         :root {
             /* --- 寸法設定 --- */
@@ -24,15 +24,15 @@
             /* --- 度数カラー定義 --- */
             /* 1: Root - Red */
             --c-1: #e53935;
-            /* 2(9): Cyan */
+            /* 2: 9th - Cyan */
             --c-2: #00acc1;
             /* 3: 3rd - Green */
             --c-3: #43a047;
-            /* 4(11): Pink */
+            /* 4: 11th - Pink */
             --c-4: #d81b60;
             /* 5: 5th - Blue */
             --c-5: #1e88e5;
-            /* 6(13): Purple */
+            /* 6: 13th - Purple */
             --c-6: #8e24aa;
             /* 7: 7th - Orange */
             --c-7: #fb8c00;
@@ -348,15 +348,26 @@
         <div class="control-group">
             <label>Scale Type</label>
             <select id="scale-select" onchange="updateApp()">
-                <option value="major">Major (メジャー)</option>
-                <option value="minor">Minor (マイナー)</option>
-                <option value="major-penta">Major Pentatonic</option>
-                <option value="minor-penta">Minor Pentatonic</option>
-                <option value="blues">Blues Scale</option>
-                <option value="mixolydian">Mixolydian (7th系)</option>
-                <option value="dorian">Dorian (m7系)</option>
-                <option value="harmonic-minor">Harmonic Minor</option>
-                <option value="chromatic">Chromatic (全音)</option>
+                <optgroup label="Church Modes">
+                    <option value="ionian">1. Ionian (Major Scale)</option>
+                    <option value="dorian">2. Dorian</option>
+                    <option value="phrygian">3. Phrygian</option>
+                    <option value="lydian">4. Lydian</option>
+                    <option value="mixolydian">5. Mixolydian</option>
+                    <option value="aeolian">6. Aeolian (Natural Minor)</option>
+                    <option value="locrian">7. Locrian</option>
+                </optgroup>
+                <optgroup label="Other Scales">
+                    <option value="melodic-minor">Melodic Minor (Jazz)</option>
+                    <option value="harmonic-minor">Harmonic Minor</option>
+                    <option value="hungarian-minor">Hungarian Minor</option>
+                    <option value="whole-tone">Whole Tone</option>
+                    <option value="diminished">Diminished (Whole-Half)</option>
+                    <option value="major-penta">Major Pentatonic</option>
+                    <option value="minor-penta">Minor Pentatonic</option>
+                    <option value="blues">Blues Scale</option>
+                    <option value="chromatic">Chromatic (All)</option>
+                </optgroup>
             </select>
         </div>
 
@@ -369,7 +380,6 @@
             </div>
         </div>
 
-        <!-- Interval Notation Toggle -->
         <div class="control-group">
             <label>Interval (度数表記)</label>
             <div class="toggle-container">
@@ -438,15 +448,25 @@
         notesKanaF: ['ド', 'レb', 'レ', 'ミb', 'ミ', 'ファ', 'ソb', 'ソ', 'ラb', 'ラ', 'シb', 'シ'],
         
         scales: {
-            'major': [0, 2, 4, 5, 7, 9, 11],
-            'minor': [0, 2, 3, 5, 7, 8, 10],
-            'major-penta': [0, 2, 4, 7, 9],
-            'minor-penta': [0, 3, 5, 7, 10],
-            'blues': [0, 3, 5, 6, 7, 10],
+            // Church Modes
+            'ionian':       [0, 2, 4, 5, 7, 9, 11],
+            'dorian':       [0, 2, 3, 5, 7, 9, 10],
+            'phrygian':     [0, 1, 3, 5, 7, 8, 10],
+            'lydian':       [0, 2, 4, 6, 7, 9, 11],
+            'mixolydian':   [0, 2, 4, 5, 7, 9, 10],
+            'aeolian':      [0, 2, 3, 5, 7, 8, 10],
+            'locrian':      [0, 1, 3, 5, 6, 8, 10],
+            
+            // Other Scales
+            'melodic-minor': [0, 2, 3, 5, 7, 9, 11],
+            'hungarian-minor': [0, 2, 3, 6, 7, 8, 11],
+            'whole-tone':   [0, 2, 4, 6, 8, 10],
+            'diminished':   [0, 2, 3, 5, 6, 8, 9, 11], // Whole-Half
             'harmonic-minor': [0, 2, 3, 5, 7, 8, 11],
-            'mixolydian': [0, 2, 4, 5, 7, 9, 10],
-            'dorian': [0, 2, 3, 5, 7, 9, 10],
-            'chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            'major-penta':  [0, 2, 4, 7, 9],
+            'minor-penta':  [0, 3, 5, 7, 10],
+            'blues':        [0, 3, 5, 6, 7, 10],
+            'chromatic':    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         },
         
         // Simple Mode (Standard)
@@ -463,7 +483,7 @@
 
     let appState = {
         key: 0, 
-        scale: 'major',
+        scale: 'ionian',
         tuning: 'standard',
         mode: 'abc',
         sign: 'sharp',
@@ -607,7 +627,6 @@
                     // Text Content
                     let text = '';
                     if (appState.mode === 'degree') {
-                        // Switch between Simple (2,4,6) and Extended (9,11,13)
                         if (appState.notation === 'extension') {
                             text = DATA.intervalsExtended[interval];
                         } else {
@@ -647,15 +666,15 @@
         toggleBtn(btn);
         updateApp();
     }
+    function setNotation(n, btn) {
+        appState.notation = n;
+        toggleBtn(btn);
+        updateApp();
+    }
     function setSign(s, btn) {
         appState.sign = s;
         toggleBtn(btn);
         initKeySelect();
-        updateApp();
-    }
-    function setNotation(n, btn) {
-        appState.notation = n;
-        toggleBtn(btn);
         updateApp();
     }
     function toggleBtn(btn) {
@@ -667,3 +686,4 @@
 
 </body>
 </html>
+
