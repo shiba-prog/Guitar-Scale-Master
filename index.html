@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guitar Scale Master Comprehensive</title>
+    <title>Guitar Scale Master with Sound</title>
     <style>
         :root {
             /* --- 寸法設定 --- */
@@ -22,22 +22,14 @@
             --inlay-color: rgba(255, 255, 255, 0.4);
 
             /* --- 度数カラー定義 --- */
-            /* 1: Root - Red */
-            --c-1: #e53935;
-            /* 2: 9th - Cyan */
-            --c-2: #00acc1;
-            /* 3: 3rd - Green */
-            --c-3: #43a047;
-            /* 4: 11th - Pink */
-            --c-4: #d81b60;
-            /* 5: 5th - Blue */
-            --c-5: #1e88e5;
-            /* 6: 13th - Purple */
-            --c-6: #8e24aa;
-            /* 7: 7th - Orange */
-            --c-7: #fb8c00;
+            --c-1: #e53935; /* Root */
+            --c-2: #00acc1; /* 9th */
+            --c-3: #43a047; /* 3rd */
+            --c-4: #d81b60; /* 11th */
+            --c-5: #1e88e5; /* 5th */
+            --c-6: #8e24aa; /* 13th */
+            --c-7: #fb8c00; /* 7th */
             
-            /* テキスト色 */
             --c-text: #ffffff;
         }
 
@@ -47,6 +39,8 @@
             margin: 0;
             padding: 20px;
             color: #333;
+            /* タップ時のハイライト無効化 (スマホ用) */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .container {
@@ -97,7 +91,7 @@
             cursor: pointer;
             transition: border 0.2s;
             min-width: 120px;
-            max-width: 250px; /* スケール名が長いので広めに */
+            max-width: 250px;
             color: #455a64;
         }
         select:hover { border-color: #90a4ae; }
@@ -224,16 +218,27 @@
             
             opacity: 0;
             transform: scale(0.5);
-            transition: all 0.15s ease-out;
+            transition: all 0.1s ease-out; /* クリック時の反応を良くする */
             text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            user-select: none; /* テキスト選択防止 */
         }
 
         .note.visible { opacity: 1; }
-        .note:hover { transform: scale(1.3) !important; z-index: 20; }
+        
+        .note:hover { 
+            transform: scale(1.3) !important; 
+            z-index: 20; 
+        }
+        
+        /* クリック時のエフェクト */
+        .note:active {
+            transform: scale(0.9) !important;
+            filter: brightness(1.2);
+        }
 
         /* --- Role Based Styles --- */
 
-        /* 1. Root: Red, Thick White Border + Thin Black Outer Border */
+        /* 1. Root */
         .note[data-role="1"] {
             background-color: var(--c-1);
             border: 2px solid #fff; 
@@ -242,30 +247,12 @@
             z-index: 15;
         }
 
-        /* 2. Chord Tones (3, 5, 7): Black Border + Thin White Outer Border */
-        .note[data-role="3"] { 
-            background-color: var(--c-3); 
-            border: 1.5px solid #222; 
-            box-shadow: 0 0 0 1.5px #fff; 
-            transform: scale(1.1); 
-            z-index: 12; 
-        }
-        .note[data-role="5"] { 
-            background-color: var(--c-5); 
-            border: 1.5px solid #222; 
-            box-shadow: 0 0 0 1.5px #fff;
-            transform: scale(1.1); 
-            z-index: 12; 
-        }
-        .note[data-role="7"] { 
-            background-color: var(--c-7); 
-            border: 1.5px solid #222;
-            box-shadow: 0 0 0 1.5px #fff; 
-            transform: scale(1.1); 
-            z-index: 12; 
-        }
+        /* 2. Main (3, 5, 7) */
+        .note[data-role="3"] { background-color: var(--c-3); border: 1.5px solid #222; box-shadow: 0 0 0 1.5px #fff; transform: scale(1.1); z-index: 12; }
+        .note[data-role="5"] { background-color: var(--c-5); border: 1.5px solid #222; box-shadow: 0 0 0 1.5px #fff; transform: scale(1.1); z-index: 12; }
+        .note[data-role="7"] { background-color: var(--c-7); border: 1.5px solid #222; box-shadow: 0 0 0 1.5px #fff; transform: scale(1.1); z-index: 12; }
 
-        /* 3. Tensions (2, 4, 6): No Border */
+        /* 3. Tensions (2, 4, 6) */
         .note[data-role="2"] { background-color: var(--c-2); transform: scale(0.9); z-index: 10; opacity: 0.95; }
         .note[data-role="4"] { background-color: var(--c-4); transform: scale(0.9); z-index: 10; opacity: 0.95; }
         .note[data-role="6"] { background-color: var(--c-6); transform: scale(0.9); z-index: 10; opacity: 0.95; }
@@ -349,7 +336,7 @@
         <div class="control-group">
             <label>Scale</label>
             <select id="scale-select" onchange="updateApp()">
-                <!-- Options will be populated by JS -->
+                <!-- Options populated by JS -->
             </select>
         </div>
 
@@ -407,31 +394,60 @@
 </div>
 
 <script>
+    // --- Audio System ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(midiNote) {
+        // User gesture protection check
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        // Frequency Calculation (A4 = 440Hz, MIDI 69)
+        const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+        
+        osc.frequency.value = freq;
+        osc.type = 'triangle'; // Guitar-ish soft wave
+
+        // Envelope (ADSR)
+        const now = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.02); // Attack
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5); // Decay
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(now + 1.5);
+    }
+
     // --- Config ---
     const CONFIG = {
         frets: 15,
         strings: 6
     };
 
-    // --- Tunings ---
+    // Tunings defined in MIDI Note Numbers (Low E = E2 = 40)
+    // String 0 is High E (E4 = 64)
     const TUNINGS = {
-        'standard':   [4, 11, 7, 2, 9, 4], 
-        'drop-d':     [4, 11, 7, 2, 9, 2], 
-        'half-down':  [3, 10, 6, 1, 8, 3], 
-        'whole-down': [2, 9, 5, 0, 7, 2],  
-        'open-d':     [2, 9, 6, 2, 9, 2],  
-        'open-g':     [2, 11, 7, 2, 7, 2], 
-        'dadgad':     [2, 9, 7, 2, 9, 2]   
+        'standard':   [64, 59, 55, 50, 45, 40], 
+        'drop-d':     [64, 59, 55, 50, 45, 38], // Low E -> D2
+        'half-down':  [63, 58, 54, 49, 44, 39], // All -1
+        'whole-down': [62, 57, 53, 48, 43, 38], // All -2
+        'open-d':     [62, 57, 54, 50, 45, 38], // D A F# D A D
+        'open-g':     [62, 59, 55, 50, 43, 38], // D B G D G D
+        'dadgad':     [62, 57, 55, 50, 45, 38]  // D A G D A D
     };
 
-    // --- Data ---
     const DATA = {
         notesSharp: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
         notesFlat:  ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
         notesKanaS: ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'],
         notesKanaF: ['ド', 'レb', 'レ', 'ミb', 'ミ', 'ファ', 'ソb', 'ソ', 'ラb', 'ラ', 'シb', 'シ'],
-        
-        // Interval Display Maps
         intervalsSimple: {
             0: 'R', 1: 'b2', 2: '2', 3: 'b3', 4: '3', 5: '4', 
             6: 'b5', 7: '5', 8: 'b6', 9: '6', 10: 'b7', 11: '7'
@@ -442,27 +458,21 @@
         }
     };
 
-    // --- Scale Generator Logic ---
-    // Helper to generate mode intervals from a parent scale
+    // Scale Generation Logic
     function generateMode(parent, modeIndex) {
-        // Rotate
         const rotated = parent.slice(modeIndex).concat(parent.slice(0, modeIndex));
-        // Normalize (first note becomes 0)
         const rootVal = rotated[0];
         const intervals = rotated.map(note => (note - rootVal + 12) % 12).sort((a,b) => a-b);
         return intervals;
     }
 
-    // Parent Scales (Intervals)
     const PARENTS = {
         major: [0, 2, 4, 5, 7, 9, 11],
         melodic_minor: [0, 2, 3, 5, 7, 9, 11],
         harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
-        hungarian_minor: [0, 2, 3, 6, 7, 8, 11],
-        // Pentatonics and Symmetricals are defined manually
+        hungarian_minor: [0, 2, 3, 6, 7, 8, 11]
     };
 
-    // SCALES Object Populated with Categories
     const SCALES_DATA = [
         {
             category: "Major Scale (Modes)",
@@ -482,10 +492,10 @@
                 { name: "Melodic Minor", intervals: generateMode(PARENTS.melodic_minor, 0) },
                 { name: "Dorian b2", intervals: generateMode(PARENTS.melodic_minor, 1) },
                 { name: "Lydian #5", intervals: generateMode(PARENTS.melodic_minor, 2) },
-                { name: "Lydian Dominant (Lydian b7)", intervals: generateMode(PARENTS.melodic_minor, 3) },
+                { name: "Lydian Dominant", intervals: generateMode(PARENTS.melodic_minor, 3) },
                 { name: "Mixolydian b6", intervals: generateMode(PARENTS.melodic_minor, 4) },
-                { name: "Aeolian b5 (Locrian #2)", intervals: generateMode(PARENTS.melodic_minor, 5) },
-                { name: "Super Locrian (Altered)", intervals: generateMode(PARENTS.melodic_minor, 6) }
+                { name: "Aeolian b5", intervals: generateMode(PARENTS.melodic_minor, 5) },
+                { name: "Super Locrian", intervals: generateMode(PARENTS.melodic_minor, 6) }
             ]
         },
         {
@@ -495,21 +505,21 @@
                 { name: "Locrian Natural 6", intervals: generateMode(PARENTS.harmonic_minor, 1) },
                 { name: "Ionian #5", intervals: generateMode(PARENTS.harmonic_minor, 2) },
                 { name: "Dorian #4", intervals: generateMode(PARENTS.harmonic_minor, 3) },
-                { name: "Phrygian Major (Dominant)", intervals: generateMode(PARENTS.harmonic_minor, 4) },
+                { name: "Phrygian Major", intervals: generateMode(PARENTS.harmonic_minor, 4) },
                 { name: "Lydian #2", intervals: generateMode(PARENTS.harmonic_minor, 5) },
-                { name: "Super Locrian bb7 (Diminished)", intervals: generateMode(PARENTS.harmonic_minor, 6) }
+                { name: "Super Locrian bb7", intervals: generateMode(PARENTS.harmonic_minor, 6) }
             ]
         },
         {
             category: "Hungarian Minor Scale (Modes)",
             scales: [
                 { name: "Hungarian Minor", intervals: generateMode(PARENTS.hungarian_minor, 0) },
-                { name: "Mixolydian b2", intervals: generateMode(PARENTS.hungarian_minor, 4) }, // 5th mode
-                { name: "Lydian #2, #5", intervals: generateMode(PARENTS.hungarian_minor, 2) }, // 3rd mode (approx) - checking math: 3,6,7,8,11,0,2 -> 0,3,4,5,8,9,11
-                { name: "Locrian bb7", intervals: generateMode(PARENTS.hungarian_minor, 6) }, // 7th
-                { name: "Ionian b6", intervals: generateMode(PARENTS.hungarian_minor, 5) }, // 6th 
-                { name: "Dorian b5", intervals: generateMode(PARENTS.hungarian_minor, 1) }, // 2nd
-                { name: "Phrygian b4", intervals: generateMode(PARENTS.hungarian_minor, 3) } // 4th
+                { name: "Mixolydian b2", intervals: generateMode(PARENTS.hungarian_minor, 4) },
+                { name: "Lydian #2, #5", intervals: generateMode(PARENTS.hungarian_minor, 2) },
+                { name: "Locrian bb7", intervals: generateMode(PARENTS.hungarian_minor, 6) },
+                { name: "Ionian b6", intervals: generateMode(PARENTS.hungarian_minor, 5) },
+                { name: "Dorian b5", intervals: generateMode(PARENTS.hungarian_minor, 1) },
+                { name: "Phrygian b4", intervals: generateMode(PARENTS.hungarian_minor, 3) }
             ]
         },
         {
@@ -520,25 +530,22 @@
                 { name: "Dominant Pentatonic", intervals: [0, 2, 4, 7, 10] },
                 { name: "Ritsu (Gagaku)", intervals: [0, 2, 5, 7, 9] },
                 { name: "Ryukyu (Okinawa)", intervals: [0, 4, 5, 7, 11] },
-                { name: "Iwato (Hirajoshi Mode)", intervals: [0, 1, 5, 6, 10] }
+                { name: "Iwato", intervals: [0, 1, 5, 6, 10] }
             ]
         },
         {
             category: "Symmetrical Scale",
             scales: [
                 { name: "Whole Tone", intervals: [0, 2, 4, 6, 8, 10] },
-                { name: "Diminished (Whole-Half)", intervals: [0, 2, 3, 5, 6, 8, 9, 11] },
-                { name: "Combination of Diminished (Half-Whole)", intervals: [0, 1, 3, 4, 6, 7, 9, 10] }
+                { name: "Diminished", intervals: [0, 2, 3, 5, 6, 8, 9, 11] },
+                { name: "Combination of Diminished", intervals: [0, 1, 3, 4, 6, 7, 9, 10] }
             ]
         }
     ];
 
-    // Re-verify Hungarian mapping manual override if generated logic is slightly off standard naming convention expectations, but math is correct relative to parent.
-    // For this implementation, I used simple rotation of [0,2,3,6,7,8,11].
-
     let appState = {
         key: 0, 
-        scaleIndex: "0-0", // group-index
+        scaleIndex: "0-0",
         tuning: 'standard',
         mode: 'abc',
         sign: 'sharp',
@@ -553,7 +560,6 @@
     };
 
     function initControls() {
-        // Init Key Select
         const keySel = document.getElementById('key-select');
         keySel.innerHTML = '';
         const notes = appState.sign === 'sharp' ? DATA.notesSharp : DATA.notesFlat;
@@ -565,7 +571,6 @@
             keySel.appendChild(opt);
         });
 
-        // Init Scale Select
         const scaleSel = document.getElementById('scale-select');
         scaleSel.innerHTML = '';
         SCALES_DATA.forEach((group, gIdx) => {
@@ -579,7 +584,7 @@
             });
             scaleSel.appendChild(grp);
         });
-        scaleSel.value = "0-0"; // Default Ionian
+        scaleSel.value = "0-0"; 
     }
 
     // --- Rendering ---
@@ -587,7 +592,7 @@
         const container = document.getElementById('fretboard-container');
         container.innerHTML = '';
 
-        // 1. Header
+        // Header
         const headerRow = document.createElement('div');
         headerRow.className = 'grid-row header';
         headerRow.appendChild(createCell('open', '0'));
@@ -599,22 +604,19 @@
         }
         container.appendChild(headerRow);
 
-        // 2. Strings
+        // Strings
         for (let s = 0; s < CONFIG.strings; s++) {
             const row = document.createElement('div');
             row.className = 'grid-row';
             const thickness = (1 + s * 0.6) + 'px';
 
-            // Open
             const openCell = createCell('open', '');
             addString(openCell, thickness);
             openCell.appendChild(createNote(s, 0));
             row.appendChild(openCell);
 
-            // Nut
             row.appendChild(createCell('nut', ''));
 
-            // Frets
             for (let f = 1; f <= CONFIG.frets; f++) {
                 const fretCell = createCell('fret', '');
                 addString(fretCell, thickness);
@@ -626,7 +628,6 @@
         }
     }
 
-    // --- Helpers ---
     function createCell(type, content) {
         const d = document.createElement('div');
         d.className = `cell ${type}`;
@@ -638,11 +639,29 @@
         l.className = 'string-line'; l.style.height = h;
         cell.appendChild(l);
     }
+    
+    // Note Creation with Click Handler
     function createNote(s, f) {
         const n = document.createElement('div');
-        n.className = 'note'; n.id = `n-${s}-${f}`;
+        n.className = 'note'; 
+        n.id = `n-${s}-${f}`;
+        
+        // Add Sound Event
+        n.onclick = function() {
+            // Check if note is visible (active in scale)
+            if (!this.classList.contains('visible')) return;
+
+            // Calculate MIDI Note dynamically based on current tuning
+            const tuning = TUNINGS[appState.tuning]; // array of MIDI numbers
+            const stringBaseMidi = tuning[s];
+            const noteMidi = stringBaseMidi + f;
+            
+            playTone(noteMidi);
+        };
+        
         return n;
     }
+
     function addInlay(cell, f) {
         const dots = [3, 5, 7, 9, 12, 15];
         if (!dots.includes(f)) return;
@@ -665,41 +684,37 @@
         appState.scaleIndex = document.getElementById('scale-select').value;
         appState.tuning = document.getElementById('tuning-select').value;
         
-        // Retrieve scale intervals
         const [gIdx, sIdx] = appState.scaleIndex.split('-').map(Number);
         const scaleIntervals = SCALES_DATA[gIdx].scales[sIdx].intervals;
         
         const root = appState.key;
-        const currentTuning = TUNINGS[appState.tuning];
+        const currentTuning = TUNINGS[appState.tuning]; // MIDI notes
 
         for (let s = 0; s < CONFIG.strings; s++) {
-            let openPitch = currentTuning[s];
-            if(openPitch < 0) openPitch += 12; 
+            let openMidi = currentTuning[s];
+            let openChroma = openMidi % 12; // 0-11
             
             for (let f = 0; f <= CONFIG.frets; f++) {
                 const el = document.getElementById(`n-${s}-${f}`);
                 if (!el) continue;
 
-                const currentPitch = (openPitch + f) % 12;
-                const interval = (currentPitch - root + 12) % 12;
+                const currentChroma = (openChroma + f) % 12;
+                const interval = (currentChroma - root + 12) % 12;
 
                 if (scaleIntervals.includes(interval)) {
                     el.classList.add('visible');
                     
-                    // Assign Role 1-7 for Color
                     let role = '1';
-                    // Simplify mapping for Symmetrical/Exotic scales
                     if (interval === 0) role = '1';
                     else if (interval <= 2) role = '2';
                     else if (interval <= 4) role = '3';
-                    else if (interval <= 6) role = '4'; // includes #11/b5
+                    else if (interval <= 6) role = '4'; 
                     else if (interval === 7) role = '5';
-                    else if (interval <= 9) role = '6'; // includes b13
+                    else if (interval <= 9) role = '6';
                     else role = '7';
 
                     el.setAttribute('data-role', role);
 
-                    // Text Content
                     let text = '';
                     if (appState.mode === 'degree') {
                         if (appState.notation === 'extension') {
@@ -710,14 +725,13 @@
                     } else {
                         const isSharp = appState.sign === 'sharp';
                         if (appState.mode === 'abc') {
-                            text = isSharp ? DATA.notesSharp[currentPitch] : DATA.notesFlat[currentPitch];
+                            text = isSharp ? DATA.notesSharp[currentChroma] : DATA.notesFlat[currentChroma];
                         } else {
-                            text = isSharp ? DATA.notesKanaS[currentPitch] : DATA.notesKanaF[currentPitch];
+                            text = isSharp ? DATA.notesKanaS[currentChroma] : DATA.notesKanaF[currentChroma];
                         }
                     }
                     el.textContent = text;
                     
-                    // Size Adjustment
                     if (text.length >= 3) {
                         el.style.fontSize = '0.6rem';
                         el.style.letterSpacing = '-1px';
@@ -749,18 +763,20 @@
     function setSign(s, btn) {
         appState.sign = s;
         toggleBtn(btn);
-        // Refresh Key Select
+        
+        // Refresh Key Options
         const keySel = document.getElementById('key-select');
-        const currentKey = keySel.value;
+        const currentVal = keySel.value;
         keySel.innerHTML = '';
         const notes = appState.sign === 'sharp' ? DATA.notesSharp : DATA.notesFlat;
         notes.forEach((n, i) => {
             const opt = document.createElement('option');
             opt.value = i;
             opt.textContent = n;
-            if (i == currentKey) opt.selected = true;
+            if (i == currentVal) opt.selected = true;
             keySel.appendChild(opt);
         });
+        
         updateApp();
     }
     function toggleBtn(btn) {
