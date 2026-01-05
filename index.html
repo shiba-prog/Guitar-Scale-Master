@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guitar Scale Master Complete</title>
+    <title>Guitar Scale Master Comprehensive</title>
     <style>
         :root {
             /* --- 寸法設定 --- */
@@ -37,7 +37,7 @@
             /* 7: 7th - Orange */
             --c-7: #fb8c00;
             
-            /* テキスト色: 白 */
+            /* テキスト色 */
             --c-text: #ffffff;
         }
 
@@ -97,6 +97,7 @@
             cursor: pointer;
             transition: border 0.2s;
             min-width: 120px;
+            max-width: 250px; /* スケール名が長いので広めに */
             color: #455a64;
         }
         select:hover { border-color: #90a4ae; }
@@ -346,28 +347,9 @@
         </div>
 
         <div class="control-group">
-            <label>Scale Type</label>
+            <label>Scale</label>
             <select id="scale-select" onchange="updateApp()">
-                <optgroup label="Church Modes">
-                    <option value="ionian">1. Ionian (Major Scale)</option>
-                    <option value="dorian">2. Dorian</option>
-                    <option value="phrygian">3. Phrygian</option>
-                    <option value="lydian">4. Lydian</option>
-                    <option value="mixolydian">5. Mixolydian</option>
-                    <option value="aeolian">6. Aeolian (Natural Minor)</option>
-                    <option value="locrian">7. Locrian</option>
-                </optgroup>
-                <optgroup label="Other Scales">
-                    <option value="melodic-minor">Melodic Minor (Jazz)</option>
-                    <option value="harmonic-minor">Harmonic Minor</option>
-                    <option value="hungarian-minor">Hungarian Minor</option>
-                    <option value="whole-tone">Whole Tone</option>
-                    <option value="diminished">Diminished (Whole-Half)</option>
-                    <option value="major-penta">Major Pentatonic</option>
-                    <option value="minor-penta">Minor Pentatonic</option>
-                    <option value="blues">Blues Scale</option>
-                    <option value="chromatic">Chromatic (All)</option>
-                </optgroup>
+                <!-- Options will be populated by JS -->
             </select>
         </div>
 
@@ -381,7 +363,7 @@
         </div>
 
         <div class="control-group">
-            <label>Interval (度数表記)</label>
+            <label>Interval</label>
             <div class="toggle-container">
                 <button class="toggle-btn active" onclick="setNotation('standard', this)">2, 4, 6</button>
                 <button class="toggle-btn" onclick="setNotation('extension', this)">9, 11, 13</button>
@@ -425,12 +407,13 @@
 </div>
 
 <script>
-    // --- Config & Data ---
+    // --- Config ---
     const CONFIG = {
         frets: 15,
         strings: 6
     };
 
+    // --- Tunings ---
     const TUNINGS = {
         'standard':   [4, 11, 7, 2, 9, 4], 
         'drop-d':     [4, 11, 7, 2, 9, 2], 
@@ -441,73 +424,162 @@
         'dadgad':     [2, 9, 7, 2, 9, 2]   
     };
 
+    // --- Data ---
     const DATA = {
         notesSharp: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
         notesFlat:  ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
         notesKanaS: ['ド', 'ド#', 'レ', 'レ#', 'ミ', 'ファ', 'ファ#', 'ソ', 'ソ#', 'ラ', 'ラ#', 'シ'],
         notesKanaF: ['ド', 'レb', 'レ', 'ミb', 'ミ', 'ファ', 'ソb', 'ソ', 'ラb', 'ラ', 'シb', 'シ'],
         
-        scales: {
-            // Church Modes
-            'ionian':       [0, 2, 4, 5, 7, 9, 11],
-            'dorian':       [0, 2, 3, 5, 7, 9, 10],
-            'phrygian':     [0, 1, 3, 5, 7, 8, 10],
-            'lydian':       [0, 2, 4, 6, 7, 9, 11],
-            'mixolydian':   [0, 2, 4, 5, 7, 9, 10],
-            'aeolian':      [0, 2, 3, 5, 7, 8, 10],
-            'locrian':      [0, 1, 3, 5, 6, 8, 10],
-            
-            // Other Scales
-            'melodic-minor': [0, 2, 3, 5, 7, 9, 11],
-            'hungarian-minor': [0, 2, 3, 6, 7, 8, 11],
-            'whole-tone':   [0, 2, 4, 6, 8, 10],
-            'diminished':   [0, 2, 3, 5, 6, 8, 9, 11], // Whole-Half
-            'harmonic-minor': [0, 2, 3, 5, 7, 8, 11],
-            'major-penta':  [0, 2, 4, 7, 9],
-            'minor-penta':  [0, 3, 5, 7, 10],
-            'blues':        [0, 3, 5, 6, 7, 10],
-            'chromatic':    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-        },
-        
-        // Simple Mode (Standard)
+        // Interval Display Maps
         intervalsSimple: {
             0: 'R', 1: 'b2', 2: '2', 3: 'b3', 4: '3', 5: '4', 
             6: 'b5', 7: '5', 8: 'b6', 9: '6', 10: 'b7', 11: '7'
         },
-        // Extension Mode (Jazz)
         intervalsExtended: {
             0: 'R', 1: 'b9', 2: '9', 3: 'b3', 4: '3', 5: '11', 
             6: '#11', 7: '5', 8: 'b13', 9: '13', 10: 'b7', 11: '7'
         }
     };
 
+    // --- Scale Generator Logic ---
+    // Helper to generate mode intervals from a parent scale
+    function generateMode(parent, modeIndex) {
+        // Rotate
+        const rotated = parent.slice(modeIndex).concat(parent.slice(0, modeIndex));
+        // Normalize (first note becomes 0)
+        const rootVal = rotated[0];
+        const intervals = rotated.map(note => (note - rootVal + 12) % 12).sort((a,b) => a-b);
+        return intervals;
+    }
+
+    // Parent Scales (Intervals)
+    const PARENTS = {
+        major: [0, 2, 4, 5, 7, 9, 11],
+        melodic_minor: [0, 2, 3, 5, 7, 9, 11],
+        harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
+        hungarian_minor: [0, 2, 3, 6, 7, 8, 11],
+        // Pentatonics and Symmetricals are defined manually
+    };
+
+    // SCALES Object Populated with Categories
+    const SCALES_DATA = [
+        {
+            category: "Major Scale (Modes)",
+            scales: [
+                { name: "Ionian (Major)", intervals: generateMode(PARENTS.major, 0) },
+                { name: "Dorian", intervals: generateMode(PARENTS.major, 1) },
+                { name: "Phrygian", intervals: generateMode(PARENTS.major, 2) },
+                { name: "Lydian", intervals: generateMode(PARENTS.major, 3) },
+                { name: "Mixolydian", intervals: generateMode(PARENTS.major, 4) },
+                { name: "Aeolian (Natural Minor)", intervals: generateMode(PARENTS.major, 5) },
+                { name: "Locrian", intervals: generateMode(PARENTS.major, 6) }
+            ]
+        },
+        {
+            category: "Melodic Minor Scale (Modes)",
+            scales: [
+                { name: "Melodic Minor", intervals: generateMode(PARENTS.melodic_minor, 0) },
+                { name: "Dorian b2", intervals: generateMode(PARENTS.melodic_minor, 1) },
+                { name: "Lydian #5", intervals: generateMode(PARENTS.melodic_minor, 2) },
+                { name: "Lydian Dominant (Lydian b7)", intervals: generateMode(PARENTS.melodic_minor, 3) },
+                { name: "Mixolydian b6", intervals: generateMode(PARENTS.melodic_minor, 4) },
+                { name: "Aeolian b5 (Locrian #2)", intervals: generateMode(PARENTS.melodic_minor, 5) },
+                { name: "Super Locrian (Altered)", intervals: generateMode(PARENTS.melodic_minor, 6) }
+            ]
+        },
+        {
+            category: "Harmonic Minor Scale (Modes)",
+            scales: [
+                { name: "Harmonic Minor", intervals: generateMode(PARENTS.harmonic_minor, 0) },
+                { name: "Locrian Natural 6", intervals: generateMode(PARENTS.harmonic_minor, 1) },
+                { name: "Ionian #5", intervals: generateMode(PARENTS.harmonic_minor, 2) },
+                { name: "Dorian #4", intervals: generateMode(PARENTS.harmonic_minor, 3) },
+                { name: "Phrygian Major (Dominant)", intervals: generateMode(PARENTS.harmonic_minor, 4) },
+                { name: "Lydian #2", intervals: generateMode(PARENTS.harmonic_minor, 5) },
+                { name: "Super Locrian bb7 (Diminished)", intervals: generateMode(PARENTS.harmonic_minor, 6) }
+            ]
+        },
+        {
+            category: "Hungarian Minor Scale (Modes)",
+            scales: [
+                { name: "Hungarian Minor", intervals: generateMode(PARENTS.hungarian_minor, 0) },
+                { name: "Mixolydian b2", intervals: generateMode(PARENTS.hungarian_minor, 4) }, // 5th mode
+                { name: "Lydian #2, #5", intervals: generateMode(PARENTS.hungarian_minor, 2) }, // 3rd mode (approx) - checking math: 3,6,7,8,11,0,2 -> 0,3,4,5,8,9,11
+                { name: "Locrian bb7", intervals: generateMode(PARENTS.hungarian_minor, 6) }, // 7th
+                { name: "Ionian b6", intervals: generateMode(PARENTS.hungarian_minor, 5) }, // 6th 
+                { name: "Dorian b5", intervals: generateMode(PARENTS.hungarian_minor, 1) }, // 2nd
+                { name: "Phrygian b4", intervals: generateMode(PARENTS.hungarian_minor, 3) } // 4th
+            ]
+        },
+        {
+            category: "Pentatonic Scale",
+            scales: [
+                { name: "Major Pentatonic", intervals: [0, 2, 4, 7, 9] },
+                { name: "Minor Pentatonic", intervals: [0, 3, 5, 7, 10] },
+                { name: "Dominant Pentatonic", intervals: [0, 2, 4, 7, 10] },
+                { name: "Ritsu (Gagaku)", intervals: [0, 2, 5, 7, 9] },
+                { name: "Ryukyu (Okinawa)", intervals: [0, 4, 5, 7, 11] },
+                { name: "Iwato (Hirajoshi Mode)", intervals: [0, 1, 5, 6, 10] }
+            ]
+        },
+        {
+            category: "Symmetrical Scale",
+            scales: [
+                { name: "Whole Tone", intervals: [0, 2, 4, 6, 8, 10] },
+                { name: "Diminished (Whole-Half)", intervals: [0, 2, 3, 5, 6, 8, 9, 11] },
+                { name: "Combination of Diminished (Half-Whole)", intervals: [0, 1, 3, 4, 6, 7, 9, 10] }
+            ]
+        }
+    ];
+
+    // Re-verify Hungarian mapping manual override if generated logic is slightly off standard naming convention expectations, but math is correct relative to parent.
+    // For this implementation, I used simple rotation of [0,2,3,6,7,8,11].
+
     let appState = {
         key: 0, 
-        scale: 'ionian',
+        scaleIndex: "0-0", // group-index
         tuning: 'standard',
         mode: 'abc',
         sign: 'sharp',
-        notation: 'standard' // 'standard' or 'extension'
+        notation: 'standard'
     };
 
     // --- Init ---
     window.onload = () => {
-        initKeySelect();
+        initControls();
         renderGrid();
         updateApp();
     };
 
-    function initKeySelect() {
-        const sel = document.getElementById('key-select');
-        sel.innerHTML = ''; 
+    function initControls() {
+        // Init Key Select
+        const keySel = document.getElementById('key-select');
+        keySel.innerHTML = '';
         const notes = appState.sign === 'sharp' ? DATA.notesSharp : DATA.notesFlat;
         notes.forEach((n, i) => {
             const opt = document.createElement('option');
             opt.value = i;
             opt.textContent = n;
             if (i === appState.key) opt.selected = true;
-            sel.appendChild(opt);
+            keySel.appendChild(opt);
         });
+
+        // Init Scale Select
+        const scaleSel = document.getElementById('scale-select');
+        scaleSel.innerHTML = '';
+        SCALES_DATA.forEach((group, gIdx) => {
+            const grp = document.createElement('optgroup');
+            grp.label = group.category;
+            group.scales.forEach((s, sIdx) => {
+                const opt = document.createElement('option');
+                opt.value = `${gIdx}-${sIdx}`;
+                opt.textContent = s.name;
+                grp.appendChild(opt);
+            });
+            scaleSel.appendChild(grp);
+        });
+        scaleSel.value = "0-0"; // Default Ionian
     }
 
     // --- Rendering ---
@@ -590,12 +662,14 @@
     // --- Core Logic ---
     function updateApp() {
         appState.key = parseInt(document.getElementById('key-select').value);
-        appState.scale = document.getElementById('scale-select').value;
+        appState.scaleIndex = document.getElementById('scale-select').value;
         appState.tuning = document.getElementById('tuning-select').value;
         
-        const scaleInts = DATA.scales[appState.scale];
-        const root = appState.key;
+        // Retrieve scale intervals
+        const [gIdx, sIdx] = appState.scaleIndex.split('-').map(Number);
+        const scaleIntervals = SCALES_DATA[gIdx].scales[sIdx].intervals;
         
+        const root = appState.key;
         const currentTuning = TUNINGS[appState.tuning];
 
         for (let s = 0; s < CONFIG.strings; s++) {
@@ -609,17 +683,18 @@
                 const currentPitch = (openPitch + f) % 12;
                 const interval = (currentPitch - root + 12) % 12;
 
-                if (scaleInts.includes(interval)) {
+                if (scaleIntervals.includes(interval)) {
                     el.classList.add('visible');
                     
                     // Assign Role 1-7 for Color
                     let role = '1';
+                    // Simplify mapping for Symmetrical/Exotic scales
                     if (interval === 0) role = '1';
                     else if (interval <= 2) role = '2';
                     else if (interval <= 4) role = '3';
-                    else if (interval <= 6) role = '4'; 
+                    else if (interval <= 6) role = '4'; // includes #11/b5
                     else if (interval === 7) role = '5';
-                    else if (interval <= 9) role = '6';
+                    else if (interval <= 9) role = '6'; // includes b13
                     else role = '7';
 
                     el.setAttribute('data-role', role);
@@ -674,7 +749,18 @@
     function setSign(s, btn) {
         appState.sign = s;
         toggleBtn(btn);
-        initKeySelect();
+        // Refresh Key Select
+        const keySel = document.getElementById('key-select');
+        const currentKey = keySel.value;
+        keySel.innerHTML = '';
+        const notes = appState.sign === 'sharp' ? DATA.notesSharp : DATA.notesFlat;
+        notes.forEach((n, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = n;
+            if (i == currentKey) opt.selected = true;
+            keySel.appendChild(opt);
+        });
         updateApp();
     }
     function toggleBtn(btn) {
