@@ -686,6 +686,7 @@
         {
             category: "Messiaen Modes",
             scales: [
+                { name: "Mode 2", intervals: [0, 1, 3, 4, 6, 7, 9, 10], degreeMap: {0:'1', 1:'b2', 3:'b3', 4:'3', 6:'#4', 7:'5', 9:'6', 10:'b7'} },
                 { name: "Mode 3", intervals: [0, 2, 3, 4, 6, 7, 9, 10], degreeMap: {0:'1', 2:'2', 3:'b3', 4:'3', 6:'#4', 7:'5', 9:'6', 10:'b7'} },
                 { name: "Mode 4", intervals: [0, 1, 3, 4, 6, 7, 9], degreeMap: {0:'1', 1:'b2', 3:'b3', 4:'3', 6:'#4', 7:'5', 9:'6'} },
                 { name: "Mode 6", intervals: [0, 2, 3, 4, 7, 8, 10], degreeMap: {0:'1', 2:'2', 3:'b3', 4:'3', 7:'5', 8:'b6', 10:'b7'} }
@@ -696,8 +697,10 @@
             scales: [
                 { name: "Bebop Dominant", intervals: [0, 2, 4, 5, 7, 9, 10, 11], degreeMap: {0:'1', 2:'2', 4:'3', 5:'4', 7:'5', 9:'6', 10:'b7', 11:'7'} },
                 { name: "Bebop Major", intervals: [0, 2, 4, 5, 7, 8, 9, 11], degreeMap: {0:'1', 2:'2', 4:'3', 5:'4', 7:'5', 8:'#5', 9:'6', 11:'7'} },
-                { name: "Bebop Minor", intervals: [0, 2, 3, 4, 5, 7, 9, 10], degreeMap: {0:'1', 2:'2', 3:'b3', 4:'3', 5:'4', 7:'5', 9:'6', 10:'b7'} },
-                { name: "Bebop Dorian", intervals: [0, 2, 3, 4, 5, 7, 9, 10], degreeMap: {0:'1', 2:'2', 3:'b3', 4:'3', 5:'4', 7:'5', 9:'6', 10:'b7'} }
+                { name: "Bebop Minor (Bebop Dorian)", intervals: [0, 2, 3, 4, 5, 7, 9, 10], degreeMap: {0:'1', 2:'2', 3:'b3', 4:'3', 5:'4', 7:'5', 9:'6', 10:'b7'} },
+                { name: "Alternate Bebop Dorian", intervals: [0, 2, 4, 5, 7, 9, 10, 11], degreeMap: {0:'1', 2:'2', 4:'3', 5:'4', 7:'5', 9:'6', 10:'b7', 11:'7'} }, 
+                { name: "Bebop Melodic Minor", intervals: [0, 2, 3, 5, 7, 8, 9, 11], degreeMap: {0:'1', 2:'2', 3:'b3', 5:'4', 7:'5', 8:'#5', 9:'6', 11:'7'} },
+                { name: "Bebop Harmonic Minor", intervals: [0, 2, 3, 5, 7, 8, 10, 11], degreeMap: {0:'1', 2:'2', 3:'b3', 5:'4', 7:'5', 8:'b6', 10:'b7', 11:'7'} }
             ]
         },
         {
@@ -756,7 +759,8 @@
             scales: [
                 { name: "Major Pentatonic", intervals: [0, 2, 4, 7, 9] },
                 { name: "Minor Pentatonic", intervals: [0, 3, 5, 7, 10] },
-                { name: "Dominant Pentatonic", intervals: [0, 2, 4, 7, 10] }
+                { name: "Dominant Pentatonic", intervals: [0, 2, 4, 7, 10] },
+                { name: "Altered Pentatonic", intervals: [0, 1, 3, 6, 10], degreeMap: {0:'1', 1:'b2', 3:'b3', 6:'b5', 10:'b7'} }
             ]
         },
         {
